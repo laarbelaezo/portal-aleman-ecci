@@ -1,149 +1,140 @@
-const preguntas = [
-    {
-        pregunta: "1. ___ Mann liest ein Buch. (Nominativo, masculino)",
-        opciones: ["Der", "Den", "Dem", "Das"],
-        respuestaCorrecta: 0
-    },
-    {
-        pregunta: "2. Ich kaufe ___ Tisch. (Acusativo, masculino)",
-        opciones: ["ein", "einen", "einem", "eines"],
-        respuestaCorrecta: 1
-    },
-    {
-        pregunta: "3. Die Frau hilft ___ Lehrer. (Dativo, masculino)",
-        opciones: ["den", "der", "dem", "das"],
-        respuestaCorrecta: 2
-    },
-    {
-        pregunta: "4. ___ Katze ist schwarz. (Nominativo, femenino)",
-        opciones: ["Die", "Der", "Das", "Den"],
-        respuestaCorrecta: 0
-    },
-    {
-        pregunta: "5. Er trinkt ___ Cola. (Acusativo, femenino)",
-        opciones: ["ein", "einen", "eine", "einem"],
-        respuestaCorrecta: 2
-    },
-    {
-        pregunta: "6. Das Geschenk ist von ___ Tante. (Dativo, femenino)",
-        opciones: ["die", "der", "den", "dem"],
-        respuestaCorrecta: 1
-    },
-    {
-        pregunta: "7. ___ Kind spielt im Garten. (Nominativo, neutro)",
-        opciones: ["Der", "Die", "Das", "Den"],
-        respuestaCorrecta: 2
-    },
-    {
-        pregunta: "8. Wir haben ___ Problem. (Acusativo, neutro)",
-        opciones: ["ein", "eine", "einen", "einem"],
-        respuestaCorrecta: 0
-    },
-    {
-        pregunta: "9. Das Buch gehört ___ Mädchen. (Dativo, neutro)",
-        opciones: ["dem", "den", "das", "der"],
-        respuestaCorrecta: 0
-    },
-    {
-        pregunta: "10. ___ Autos sind sehr schnell. (Nominativo, plural)",
-        opciones: ["Das", "Die", "Der", "Den"],
-        respuestaCorrecta: 1
-    },
-    {
-        pregunta: "11. Ich spreche mit ___ Gästen. (Dativo, plural)",
-        opciones: ["die", "den", "der", "dem"],
-        respuestaCorrecta: 1
-    },
-    {
-        pregunta: "12. Wir besuchen ___ Großvater. (Acusativo, masculino definido)",
-        opciones: ["der", "den", "dem", "das"],
-        respuestaCorrecta: 1
-    },
-    {
-        pregunta: "13. Er gibt ___ Kollegin den Bericht. (Dativo, femenino indefinido)",
-        opciones: ["eine", "einen", "ein", "einer"],
-        respuestaCorrecta: 3
-    },
-    {
-        pregunta: "14. ___ Auto steht hier. (Nominativo, neutro indefinido)",
-        opciones: ["Ein", "Eine", "Einen", "Einem"],
-        respuestaCorrecta: 0
-    },
-    {
-        pregunta: "15. Sie liest ___ Bücher. (Acusativo, plural definido)",
-        opciones: ["das", "die", "den", "der"],
-        respuestaCorrecta: 1
-    }
-];
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Base de datos con los 15 ejercicios didácticos (Alemán A2)
+    const questions = [
+        { id: 1, text: "1. Der Mann trägt ______ schweren Karton (m.).", options: ["ein", "einen", "einem"], correct: "einen" },
+        { id: 2, text: "2. Die Katze schläft in ______ Karton (m.).", options: ["den", "der", "dem"], correct: "dem" },
+        { id: 3, text: "3. Auf dem Boden liegt ______ großer Rucksack (m.).", options: ["ein", "einen", "einem"], correct: "ein" },
+        { id: 4, text: "4. Die Frau stellt eine Lampe auf ______ Regal (n.).", options: ["das", "dem", "des"], correct: "das" },
+        { id: 5, text: "5. Der Rucksack liegt neben ______ Gitarre (f.).", options: ["die", "der", "den"], correct: "der" },
+        { id: 6, text: "6. Ich helfe ______ Mann (m.) bei dem Umzug.", options: ["den", "dem", "der"], correct: "dem" },
+        { id: 7, text: "7. Das Buch ist für ______ Lehrerin (f.).", options: ["eine", "einer", "einen"], correct: "eine" },
+        { id: 8, text: "8. Wir wohnen seit ______ Monat (m.) en Berlin.", options: ["einen", "einem", "ein"], correct: "einem" },
+        { id: 9, text: "9. Suchst du ______ alten Schlüssel (m.)?", options: ["der", "den", "dem"], correct: "den" },
+        { id: 10, text: "10. Das Kind spielt mit ______ neuen Spielzeugen (Plural).", options: ["die", "den", "der"], correct: "den" },
+        { id: 11, text: "11. Herr Schmidt dankt ______ Kollegin (f.) für die Hilfe.", options: ["die", "der", "den"], correct: "der" },
+        { id: 12, text: "12. Gehört das Auto ______ neuen Nachbarn (m.)?", options: ["den", "dem", "des"], correct: "dem" },
+        { id: 13, text: "13. Wir gehen durch ______ schönen Park (m.).", options: ["der", "den", "dem"], correct: "den" },
+        { id: 14, text: "14. Er ist ______ kluger Student (m.).", options: ["ein", "einen", "einem"], correct: "ein" },
+        { id: 15, text: "15. Das Fahrrad steht vor ______ Haus (n.).", options: ["das", "dem", "den"], correct: "dem" }
+    ];
 
-const contenedorPreguntas = document.getElementById('preguntas-container');
-const formulario = document.getElementById('quiz-form');
-const divResultado = document.getElementById('resultado');
+    const preguntasContainer = document.getElementById('preguntas-container');
+    const quizForm = document.getElementById('quiz-form');
+    const resultadoDiv = document.getElementById('resultado');
+    const listaResultados = document.getElementById('lista-resultados');
 
-function cargarPreguntas() {
-    preguntas.forEach((q, index) => {
-        const bloqueDiv = document.createElement('div');
-        bloqueDiv.className = 'pregunta-bloque';
+    // 2. Renderizar las 15 preguntas de forma dinámica en la interfaz
+    questions.forEach((q) => {
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'pregunta-block';
+        questionDiv.style.marginBottom = '15px';
 
-        const preguntaTexto = document.createElement('p');
-        preguntaTexto.textContent = q.pregunta;
-        bloqueDiv.appendChild(preguntaTexto);
+        const label = document.createElement('p');
+        label.style.fontWeight = 'bold';
+        label.style.margin = '5px 0';
+        label.textContent = q.text;
+        questionDiv.appendChild(label);
 
-        q.opciones.forEach((opcion, i) => {
-            const label = document.createElement('label');
-            label.className = 'opcion';
+        q.options.forEach((opt) => {
+            const optLabel = document.createElement('label');
+            optLabel.style.display = 'block';
+            optLabel.style.marginLeft = '15px';
+            optLabel.style.cursor = 'pointer';
 
             const radio = document.createElement('input');
             radio.type = 'radio';
-            radio.name = `pregunta${index}`;
-            radio.value = i;
-            radio.required = true;
+            radio.name = `pregunta-${q.id}`;
+            radio.value = opt;
+            radio.required = true; // Hace obligatorio responder cada punto
+            radio.style.marginRight = '8px';
 
-            label.appendChild(radio);
-            label.appendChild(document.createTextNode(` ${opcion}`));
-            bloqueDiv.appendChild(label);
+            optLabel.appendChild(radio);
+            optLabel.appendChild(document.createTextNode(opt));
+            questionDiv.appendChild(optLabel);
         });
 
-        contenedorPreguntas.appendChild(bloqueDiv);
+        preguntasContainer.appendChild(questionDiv);
     });
-}
 
-function evaluarCuestionario(evento) {
-    evento.preventDefault(); 
-    let puntaje = 0;
+    // 3. Cargar el historial guardado en el navegador al abrir la página
+    cargarHistorial();
 
-    preguntas.forEach((q, index) => {
-        const opciones = document.getElementsByName(`pregunta${index}`);
-        let respuestaSeleccionada = -1;
+    // 4. Manejar el envío del cuestionario y cálculo de notas
+    quizForm.addEventListener('submit', (e) => {
+        e.preventDefault(); // Evita la recarga automática del sitio
 
-        for (let i = 0; i < opciones.length; i++) {
-            if (opciones[i].checked) {
-                respuestaSeleccionada = parseInt(opciones[i].value);
-                break;
+        const nombreEstudiante = document.getElementById('student-name').value.trim();
+        let aciertos = 0;
+
+        // Evaluar respuestas
+        questions.forEach((q) => {
+            const selectedOpt = document.querySelector(`input[name="pregunta-${q.id}"]:checked`);
+            if (selectedOpt && selectedOpt.value === q.correct) {
+                aciertos++;
             }
+        });
+
+        // Mostrar el feedback del usuario actual
+        resultadoDiv.className = ""; // Quita la clase 'oculto'
+        resultadoDiv.style.padding = "15px";
+        resultadoDiv.style.marginTop = "15px";
+        resultadoDiv.style.borderRadius = "5px";
+        resultadoDiv.style.fontWeight = "bold";
+        
+        if (aciertos >= 10) {
+            resultadoDiv.style.backgroundColor = "#d4edda";
+            resultadoDiv.style.color = "#155724";
+            resultadoDiv.textContent = `Sehr gut, ${nombreEstudiante}! Has obtenido un puntaje de ${aciertos} / 15.`;
+        } else {
+            resultadoDiv.style.backgroundColor = "#f8d7da";
+            resultadoDiv.style.color = "#721c24";
+            resultadoDiv.textContent = `Sigue practicando, ${nombreEstudiante}. Has obtenido un puntaje de ${aciertos} / 15.`;
         }
 
-        const bloque = opciones[0].closest('.pregunta-bloque');
-        if (respuestaSeleccionada === q.respuestaCorrecta) {
-            puntaje++;
-            bloque.style.borderLeft = "6px solid #28a745"; 
-        } else {
-            bloque.style.borderLeft = "6px solid #dc3545"; 
-        }
+        // 5. Guardar en el listado y en el almacenamiento local
+        const nuevoRegistro = {
+            nombre: nombreEstudiante,
+            nota: aciertos,
+            fecha: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+
+        guardarEnHistorial(nuevoRegistro);
+        quizForm.reset(); // Limpia los campos para un nuevo usuario
     });
 
-    divResultado.classList.remove('oculto');
-    divResultado.textContent = `Obtuviste ${puntaje} de ${preguntas.length} respuestas correctas.`;
-    
-    if (puntaje === preguntas.length) {
-        divResultado.className = 'correcto';
-    } else if (puntaje >= 10) {
-        divResultado.className = 'regular';
-    } else {
-        divResultado.className = 'incorrecto';
+    // Función para guardar datos en LocalStorage y renderizar
+    function guardarEnHistorial(registro) {
+        let historial = JSON.parse(localStorage.getItem('historialAlemanECCI')) || [];
+        historial.push(registro);
+        localStorage.setItem('historialAlemanECCI', JSON.stringify(historial));
+        renderizarLista(historial);
     }
-}
 
-// Inicializar el DOM
-cargarPreguntas();
-formulario.addEventListener('submit', evaluarCuestionario);
+    // Función para extraer y mostrar los datos guardados
+    function cargarHistorial() {
+        let historial = JSON.parse(localStorage.getItem('historialAlemanECCI')) || [];
+        renderizarLista(historial);
+    }
+
+    // Función para pintar la lista HTML
+    function renderizarLista(historial) {
+        listaResultados.innerHTML = ""; // Limpia el contenedor visual
+        
+        if (historial.length === 0) {
+            listaResultados.innerHTML = "<li style='color: #666; italic;'>No hay calificaciones registradas todavía.</li>";
+            return;
+        }
+
+        // Renderiza de forma inversa para que el último envío aparezca siempre arriba
+        historial.slice().reverse().forEach((reg) => {
+            const li = document.createElement('li');
+            li.style.padding = '10px';
+            li.style.borderBottom = '1px solid #e2e8f0';
+            li.style.display = 'flex';
+            li.style.justifyContent = 'space-between';
+            li.innerHTML = `<span><strong>Estudiante:</strong> ${reg.nombre}</span> 
+                            <span><strong>Calificación:</strong> <span style="color: ${reg.nota >= 10 ? '#28a745' : '#dc3545'};">${reg.nota} / 15</span> (${reg.fecha})</span>`;
+            listaResultados.appendChild(li);
+        });
+    }
+});
