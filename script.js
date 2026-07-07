@@ -1,5 +1,10 @@
+// Código Completo e Interactivo Global para script.js
+
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Base de datos con los 15 ejercicios didácticos (Alemán A2)
+    // REEMPLAZA ESTA URL POR LA URL REAL QUE TE DIO GOOGLE APPS SCRIPT AL IMPLEMENTAR
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwFAWzmZMRmzERSF_SR2ll7KeTCp0E1I_r4OAACnfXNOrPraS0xEhNXw4_bkCc5vEnuEA/exec";
+
+    // Base de datos de los 15 ejercicios didácticos (Alemán A2)
     const questions = [
         { id: 1, text: "1. Der Mann trägt ______ schweren Karton (m.).", options: ["ein", "einen", "einem"], correct: "einen" },
         { id: 2, text: "2. Die Katze schläft in ______ Karton (m.).", options: ["den", "der", "dem"], correct: "dem" },
@@ -23,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultadoDiv = document.getElementById('resultado');
     const listaResultados = document.getElementById('lista-resultados');
 
-    // 2. Renderizar las 15 preguntas de forma dinámica en la interfaz
+    // Renderizar las 15 preguntas de forma dinámica en la interfaz
     questions.forEach((q) => {
         const questionDiv = document.createElement('div');
         questionDiv.className = 'pregunta-block';
@@ -45,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
             radio.type = 'radio';
             radio.name = `pregunta-${q.id}`;
             radio.value = opt;
-            radio.required = true; // Hace obligatorio responder cada punto
+            radio.required = true;
             radio.style.marginRight = '8px';
 
             optLabel.appendChild(radio);
@@ -56,17 +61,16 @@ document.addEventListener('DOMContentLoaded', () => {
         preguntasContainer.appendChild(questionDiv);
     });
 
-    // 3. Cargar el historial guardado en el navegador al abrir la página
-    cargarHistorial();
+    // Cargar el historial global directamente desde la nube de Google Sheets
+    cargarHistorialGlobal();
 
-    // 4. Manejar el envío del cuestionario y cálculo de notas
+    // Manejar el envío del cuestionario y posteo en la nube
     quizForm.addEventListener('submit', (e) => {
-        e.preventDefault(); // Evita la recarga automática del sitio
+        e.preventDefault();
 
         const nombreEstudiante = document.getElementById('student-name').value.trim();
         let aciertos = 0;
 
-        // Evaluar respuestas
         questions.forEach((q) => {
             const selectedOpt = document.querySelector(`input[name="pregunta-${q.id}"]:checked`);
             if (selectedOpt && selectedOpt.value === q.correct) {
@@ -74,8 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Mostrar el feedback del usuario actual
-        resultadoDiv.className = ""; // Quita la clase 'oculto'
+        // Configuración visual del feedback del usuario actual
+        resultadoDiv.className = "";
         resultadoDiv.style.padding = "15px";
         resultadoDiv.style.marginTop = "15px";
         resultadoDiv.style.borderRadius = "5px";
@@ -84,48 +88,67 @@ document.addEventListener('DOMContentLoaded', () => {
         if (aciertos >= 10) {
             resultadoDiv.style.backgroundColor = "#d4edda";
             resultadoDiv.style.color = "#155724";
-            resultadoDiv.textContent = `Sehr gut, ${nombreEstudiante}! Has obtenido un puntaje de ${aciertos} / 15.`;
+            resultadoDiv.textContent = `Sehr gut, ${nombreEstudiante}! Has obtenido un puntaje de ${aciertos} / 15. Enviando a la base de datos...`;
         } else {
             resultadoDiv.style.backgroundColor = "#f8d7da";
             resultadoDiv.style.color = "#721c24";
-            resultadoDiv.textContent = `Sigue practicando, ${nombreEstudiante}. Has obtenido un puntaje de ${aciertos} / 15.`;
+            resultadoDiv.textContent = `Sigue practicando, ${nombreEstudiante}. Has obtenido un puntaje de ${aciertos} / 15. Guardando registro...`;
         }
 
-        // 5. Guardar en el listado y en el almacenamiento local
+        // Crear el paquete de datos estructurado JSON
         const nuevoRegistro = {
             nombre: nombreEstudiante,
             nota: aciertos,
-            fecha: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            fecha: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " - " + new Date().toLocaleDateString()
         };
 
-        guardarEnHistorial(nuevoRegistro);
-        quizForm.reset(); // Limpia los campos para un nuevo usuario
+        // Guardar el registro en la nube mediante una petición HTTP POST
+        fetch(WEB_APP_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Evita problemas de políticas CORS cruzadas entre servidores
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(nuevoRegistro)
+        })
+        .then(() => {
+            // Esperamos un segundo para que Google Sheets procese e inmediatamente refrescamos la lista global
+            setTimeout(() => {
+                cargarHistorialGlobal();
+                quizForm.reset();
+            }, 1000);
+        })
+        .catch(error => {
+            console.error('Error al guardar en la nube:', error);
+            resultadoDiv.textContent = "Error de conexión con la base de datos central.";
+        });
     });
 
-    // Función para guardar datos en LocalStorage y renderizar
-    function guardarEnHistorial(registro) {
-        let historial = JSON.parse(localStorage.getItem('historialAlemanECCI')) || [];
-        historial.push(registro);
-        localStorage.setItem('historialAlemanECCI', JSON.stringify(historial));
-        renderizarLista(historial);
+    // Función global para leer las calificaciones desde la base de datos de Google Sheets
+    function cargarHistorialGlobal() {
+        listaResultados.innerHTML = "<li style='color: #003366; font-style: italic;'>Conectando con el servidor de calificaciones...</li>";
+
+        fetch(WEB_APP_URL)
+        .then(response => response.json())
+        .then(historial => {
+            renderizarListaGlobal(historial);
+        })
+        .catch(error => {
+            console.error('Error al leer de la nube:', error);
+            listaResultados.innerHTML = "<li style='color: #dc3545;'>No se pudo cargar el historial global en este dispositivo.</li>";
+        });
     }
 
-    // Función para extraer y mostrar los datos guardados
-    function cargarHistorial() {
-        let historial = JSON.parse(localStorage.getItem('historialAlemanECCI')) || [];
-        renderizarLista(historial);
-    }
-
-    // Función para pintar la lista HTML
-    function renderizarLista(historial) {
-        listaResultados.innerHTML = ""; // Limpia el contenedor visual
+    // Función para renderizar los elementos HTML de la lista acumulativa en pantalla
+    function renderizarListaGlobal(historial) {
+        listaResultados.innerHTML = "";
         
-        if (historial.length === 0) {
-            listaResultados.innerHTML = "<li style='color: #666; italic;'>No hay calificaciones registradas todavía.</li>";
+        if (!historial || historial.length === 0) {
+            listaResultados.innerHTML = "<li style='color: #666; font-style: italic;'>No hay calificaciones globales registradas todavía.</li>";
             return;
         }
 
-        // Renderiza de forma inversa para que el último envío aparezca siempre arriba
+        // Pintamos el array de atrás hacia adelante para que la nota más reciente esté arriba
         historial.slice().reverse().forEach((reg) => {
             const li = document.createElement('li');
             li.style.padding = '10px';
@@ -133,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
             li.style.display = 'flex';
             li.style.justifyContent = 'space-between';
             li.innerHTML = `<span><strong>Estudiante:</strong> ${reg.nombre}</span> 
-                            <span><strong>Calificación:</strong> <span style="color: ${reg.nota >= 10 ? '#28a745' : '#dc3545'};">${reg.nota} / 15</span> (${reg.fecha})</span>`;
+                            <span><strong>Calificación:</strong> <span style="color: ${reg.nota >= 10 ? '#28a745' : '#dc3545'}; font-weight: bold;">${reg.nota} / 15</span> <small style="color: #666; margin-left: 10px;">(${reg.fecha})</small></span>`;
             listaResultados.appendChild(li);
         });
     }
