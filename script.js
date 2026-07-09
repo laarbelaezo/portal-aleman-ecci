@@ -1,10 +1,8 @@
 // Código Completo e Interactivo Global para script.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    // REEMPLAZA ESTA URL POR LA URL REAL QUE TE DIO GOOGLE APPS SCRIPT AL IMPLEMENTAR
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwFAWzmZMRmzERSF_SR2ll7KeTCp0E1I_r4OAACnfXNOrPraS0xEhNXw4_bkCc5vEnuEA/exec";
 
-    // Base de datos de los 15 ejercicios didácticos (Alemán A2)
     const questions = [
         { id: 1, text: "1. Der Mann trägt ______ schweren Karton (m.).", options: ["ein", "einen", "einem"], correct: "einen" },
         { id: 2, text: "2. Die Katze schläft in ______ Karton (m.).", options: ["den", "der", "dem"], correct: "dem" },
@@ -28,10 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultadoDiv = document.getElementById('resultado');
     const listaResultados = document.getElementById('lista-resultados');
 
-    // Renderizar las 15 preguntas de forma dinámica en la interfaz
     questions.forEach((q) => {
         const questionDiv = document.createElement('div');
-        questionDiv.className = 'pregunta-block';
+        // CORRECCIÓN: Ajustado para que coincida exactamente con la clase del CSS
+        questionDiv.className = 'pregunta-bloque';
         questionDiv.style.marginBottom = '15px';
 
         const label = document.createElement('p');
@@ -42,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         q.options.forEach((opt) => {
             const optLabel = document.createElement('label');
+            optLabel.className = 'opcion';
             optLabel.style.display = 'block';
             optLabel.style.marginLeft = '15px';
             optLabel.style.cursor = 'pointer';
@@ -61,10 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
         preguntasContainer.appendChild(questionDiv);
     });
 
-    // Cargar el historial global directamente desde la nube de Google Sheets
     cargarHistorialGlobal();
 
-    // Manejar el envío del cuestionario y posteo en la nube
     quizForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
@@ -78,7 +75,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Configuración visual del feedback del usuario actual
         resultadoDiv.className = "";
         resultadoDiv.style.padding = "15px";
         resultadoDiv.style.marginTop = "15px";
@@ -95,28 +91,25 @@ document.addEventListener('DOMContentLoaded', () => {
             resultadoDiv.textContent = `Sigue practicando, ${nombreEstudiante}. Has obtenido un puntaje de ${aciertos} / 15. Guardando registro...`;
         }
 
-        // Crear el paquete de datos estructurado JSON
         const nuevoRegistro = {
             nombre: nombreEstudiante,
             nota: aciertos,
             fecha: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " - " + new Date().toLocaleDateString()
         };
 
-        // Guardar el registro en la nube mediante una petición HTTP POST
         fetch(WEB_APP_URL, {
             method: 'POST',
-            mode: 'no-cors', // Evita problemas de políticas CORS cruzadas entre servidores
+            mode: 'no-cors',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(nuevoRegistro)
         })
         .then(() => {
-            // Esperamos un segundo para que Google Sheets procese e inmediatamente refrescamos la lista global
             setTimeout(() => {
                 cargarHistorialGlobal();
                 quizForm.reset();
-            }, 1000);
+            }, 1500); // Aumentado ligeramente para dar tiempo a Google Sheets de guardar
         })
         .catch(error => {
             console.error('Error al guardar en la nube:', error);
@@ -124,11 +117,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Función global para leer las calificaciones desde la base de datos de Google Sheets
     function cargarHistorialGlobal() {
         listaResultados.innerHTML = "<li style='color: #003366; font-style: italic;'>Conectando con el servidor de calificaciones...</li>";
 
-        fetch(WEB_APP_URL)
+        // CORRECCIÓN VITAL: Se añade un timestamp a la URL para evitar que el navegador muestre una versión en caché (vieja) de los datos.
+        const urlSinCache = WEB_APP_URL + "?t=" + new Date().getTime();
+
+        fetch(urlSinCache)
         .then(response => response.json())
         .then(historial => {
             renderizarListaGlobal(historial);
@@ -139,7 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Función para renderizar los elementos HTML de la lista acumulativa en pantalla
     function renderizarListaGlobal(historial) {
         listaResultados.innerHTML = "";
         
@@ -148,7 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Pintamos el array de atrás hacia adelante para que la nota más reciente esté arriba
         historial.slice().reverse().forEach((reg) => {
             const li = document.createElement('li');
             li.style.padding = '10px';
