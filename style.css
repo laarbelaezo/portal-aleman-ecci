@@ -9,13 +9,8 @@
     --text-color: #2c3e50;
     --text-muted: #64748b;
     --radius: 12px;
-    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
     --shadow-md: 0 10px 20px rgba(0,0,0,0.08);
-}
-
-html {
-    scroll-behavior: smooth;
 }
 
 body {
@@ -28,7 +23,7 @@ body {
     background-color: var(--bg-main);
 }
 
-/* --- HEADER DINÁMICO --- */
+/* --- HEADER --- */
 header {
     background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%);
     color: white;
@@ -37,13 +32,6 @@ header {
     border-radius: var(--radius);
     margin-bottom: 30px;
     box-shadow: 0 4px 15px rgba(0, 64, 128, 0.2);
-    transform: translateY(0);
-    transition: var(--transition);
-}
-
-header:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 64, 128, 0.3);
 }
 
 header h1 {
@@ -53,23 +41,16 @@ header h1 {
     letter-spacing: -0.5px;
 }
 
-/* --- TARJETAS DE SECCIÓN (EFECTO ELEVACIÓN) --- */
+/* --- TARJETAS DE SECCIÓN --- */
 section {
     background: var(--bg-card);
     padding: 30px;
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
     margin-bottom: 25px;
-    transition: var(--transition);
     border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-section:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-}
-
-/* Títulos con acento visual */
 section h2, section h3 {
     color: var(--primary-color);
     position: relative;
@@ -87,14 +68,12 @@ section h2::after {
     border-radius: 2px;
 }
 
-/* Listas estilizadas */
 ul, ol {
     padding-left: 20px;
 }
 
 li {
     margin-bottom: 12px;
-    transition: var(--transition);
 }
 
 li strong {
@@ -113,11 +92,6 @@ img {
     display: block;
     margin: 0 auto;
     border-radius: 8px;
-    transition: var(--transition);
-}
-
-#imagen-intro:hover img {
-    transform: scale(1.015);
 }
 
 /* --- MATRIZ DE DECLINACIÓN MODERNA --- */
@@ -144,12 +118,6 @@ img {
 .tabla-declinacion td {
     padding: 14px;
     border-bottom: 1px solid #edf2f7;
-    transition: var(--transition);
-}
-
-/* Efecto hover en las filas de la tabla */
-.tabla-declinacion tbody tr:hover td {
-    background-color: #f8fafc;
 }
 
 .col-caso {
@@ -172,11 +140,6 @@ img {
     overflow: hidden;
     border-radius: 8px;
     box-shadow: var(--shadow-sm);
-    transition: var(--transition);
-}
-
-.video-container:hover {
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
 }
 
 .video-container iframe {
@@ -192,12 +155,6 @@ img {
     background: #f8fafc;
     border-radius: 8px;
     border-left: 5px solid var(--primary-color);
-    transition: var(--transition);
-}
-
-.input-container-nombre:focus-within {
-    background: #f1f5f9;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .input-container-nombre input[type="text"] {
@@ -206,7 +163,6 @@ img {
     border: 2px solid #cbd5e1;
     border-radius: 6px;
     font-size: 1rem;
-    transition: var(--transition);
     outline: none;
 }
 
@@ -222,13 +178,6 @@ img {
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     background-color: var(--bg-card);
-    transition: var(--transition);
-}
-
-/* Cuando el alumno interactúa o pasa el mouse por la pregunta */
-.pregunta-bloque:hover {
-    border-color: #cbd5e1;
-    background-color: #fafafa;
 }
 
 .pregunta-bloque p {
@@ -238,7 +187,6 @@ img {
     font-size: 1.05rem;
 }
 
-/* Estilización de las opciones de respuesta */
 .opcion {
     display: flex;
     align-items: center;
@@ -248,13 +196,6 @@ img {
     border: 1px solid #e2e8f0;
     border-radius: 6px;
     cursor: pointer;
-    transition: var(--transition);
-}
-
-.opcion:hover {
-    background-color: #edf2f7;
-    transform: translateX(4px);
-    border-color: #cbd5e1;
 }
 
 .opcion input[type="radio"] {
@@ -277,17 +218,6 @@ button {
     width: 100%;
     margin-top: 30px;
     box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2);
-    transition: var(--transition);
-}
-
-button:hover {
-    background-color: var(--secondary-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(40, 167, 69, 0.3);
-}
-
-button:active {
-    transform: translateY(0);
 }
 
 /* --- SECCIÓN DE RESULTADOS --- */
@@ -298,10 +228,8 @@ button:active {
     font-weight: bold;
     text-align: center;
     border-radius: 8px;
-    animation: fadeIn 0.4s ease forwards;
 }
 
-/* Historial general de notas */
 #listado-publico {
     border: 1px solid #cbd5e1 !important;
     background-color: #f8fafc !important;
@@ -314,15 +242,4 @@ button:active {
     border-radius: 6px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     border-left: 4px solid var(--text-muted);
-}
-
-/* Clases de feedback de respuestas */
-.correcto { background-color: #def7ec; color: #03543f; border: 1px solid #bcf0da; }
-.regular { background-color: #fef08a; color: #713f12; border: 1px solid #fef08a; }
-.incorrecto { background-color: #fde8e8; color: #9b1c1c; border: 1px solid #fbd5d5; }
-
-/* Animación sutil de aparición */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
 }
