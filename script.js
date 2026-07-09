@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     // REEMPLAZA ESTA URL POR LA URL REAL QUE TE DIO GOOGLE APPS SCRIPT AL IMPLEMENTAR
-    const WEB_APP_URL = "PASAR_AQUÍ_TU_URL_DE_GOOGLE_APPS_SCRIPT";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwFAWzmZMRmzERSF_SR2ll7KeTCp0E1I_r4OAACnfXNOrPraS0xEhNXw4_bkCc5vEnuEA/exec";
 
     // Base de datos de los 15 ejercicios didácticos (Alemán A2)
     const questions = [
