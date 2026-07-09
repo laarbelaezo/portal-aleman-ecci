@@ -100,7 +100,6 @@
         <section id="video-youtube">
             <h2>Explicación en Video</h2>
             <div class="video-container">
-                <!-- CÓDIGO CORREGIDO: URL adaptada con tu ID real de YouTube de forma nativa para evitar bloqueos de origen -->
                 <iframe width="560" height="315" src="https://www.youtube.com/embed/wPR6i-dEKPE" title="Reproductor de YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </div>
         </section>
@@ -110,9 +109,9 @@
             <p>Pon a prueba tus conocimientos con estos 15 ejercicios. Selecciona la respuesta correcta para cada oración.</p>
             
             <form id="quiz-form">
-                <div class="input-container-nombre" style="margin-bottom: 20px; padding: 10px; background-color: #e2e8f0; border-radius: 5px;">
-                    <label for="student-name" style="display: block; font-weight: bold; margin-bottom: 5px;">Nombre Completo del Estudiante:</label>
-                    <input type="text" id="student-name" required placeholder="Ej: Juan Pérez" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                <div class="input-container-nombre">
+                    <label for="student-name" style="display: block; font-weight: bold; margin-bottom: 8px;">Nombre Completo del Estudiante:</label>
+                    <input type="text" id="student-name" required placeholder="Ej: Juan Pérez">
                 </div>
 
                 <div id="preguntas-container"></div>
@@ -121,10 +120,9 @@
             
             <div id="resultado" class="oculto"></div>
 
-            <div id="listado-publico" style="margin-top: 30px; padding: 20px; background-color: #fff; border: 2px solid #003366; border-radius: 8px;">
-                <h3 style="color: #003366; border-bottom: 2px solid #cbd5e1; padding-bottom: 5px; margin-top: 0;">Historial General de Calificaciones</h3>
-                <ul id="lista-resultados" style="list-style-type: none; padding: 0; margin: 0;">
-                </ul>
+            <div id="listado-publico">
+                <h3 style="color: #004080; margin-top: 0; padding-bottom: 8px; border-bottom: 2px solid #cbd5e1;">Historial General de Calificaciones</h3>
+                <ul id="lista-resultados"></ul>
             </div>
         </section>
     </main>
