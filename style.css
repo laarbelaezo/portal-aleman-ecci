@@ -1,29 +1,110 @@
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
-    color: #333;
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #f4f7f6;
+/* --- CONFIGURACIÓN GENERAL Y VARIABLES --- */
+:root {
+    --primary-color: #004080;
+    --primary-dark: #002850;
+    --secondary-color: #28a745;
+    --secondary-hover: #218838;
+    --bg-main: #f0f4f8;
+    --bg-card: #ffffff;
+    --text-color: #2c3e50;
+    --text-muted: #64748b;
+    --radius: 12px;
+    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+    --shadow-md: 0 10px 20px rgba(0,0,0,0.08);
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    max-width: 850px;
+    margin: 0 auto;
+    padding: 30px 20px;
+    background-color: var(--bg-main);
+}
+
+/* --- HEADER DINÁMICO --- */
 header {
-    background-color: #004080;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%);
     color: white;
     text-align: center;
-    padding: 1.5rem 0;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    padding: 2.5rem 1.5rem;
+    border-radius: var(--radius);
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(0, 64, 128, 0.2);
+    transform: translateY(0);
+    transition: var(--transition);
 }
 
+header:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 64, 128, 0.3);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+/* --- TARJETAS DE SECCIÓN (EFECTO ELEVACIÓN) --- */
 section {
-    background: white;
-    padding: 25px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    margin-bottom: 20px;
+    background: var(--bg-card);
+    padding: 30px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 25px;
+    transition: var(--transition);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+section:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Títulos con acento visual */
+section h2, section h3 {
+    color: var(--primary-color);
+    position: relative;
+    padding-bottom: 8px;
+}
+
+section h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 50px;
+    height: 4px;
+    background-color: var(--primary-color);
+    border-radius: 2px;
+}
+
+/* Listas estilizadas */
+ul, ol {
+    padding-left: 20px;
+}
+
+li {
+    margin-bottom: 12px;
+    transition: var(--transition);
+}
+
+li strong {
+    color: var(--primary-dark);
+}
+
+/* --- IMAGEN INTRODUCTORIA --- */
+#imagen-intro {
+    padding: 10px;
+    overflow: hidden;
 }
 
 img {
@@ -31,138 +112,217 @@ img {
     height: auto;
     display: block;
     margin: 0 auto;
-    border-radius: 4px;
-    border: 1px solid #ddd;
+    border-radius: 8px;
+    transition: var(--transition);
 }
 
-/* --- ESTILOS PARA LA TABLA DE DECLINACIÓN --- */
+#imagen-intro:hover img {
+    transform: scale(1.015);
+}
+
+/* --- MATRIZ DE DECLINACIÓN MODERNA --- */
 .tabla-declinacion {
     width: 100%;
-    border-collapse: collapse;
-    margin: 25px 0;
-    background-color: #ffffff;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 30px 0;
+    background-color: var(--bg-card);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
     border: 1px solid #e2e8f0;
-    font-size: 0.95rem;
 }
 
 .tabla-declinacion th {
-    background-color: #004080;
+    background-color: var(--primary-color);
     color: #ffffff;
-    padding: 12px;
+    padding: 14px;
     font-weight: 600;
     text-align: left;
-    border-bottom: 2px solid #002850;
 }
 
 .tabla-declinacion td {
-    padding: 12px;
-    border-bottom: 1px solid #e2e8f0;
+    padding: 14px;
+    border-bottom: 1px solid #edf2f7;
+    transition: var(--transition);
+}
+
+/* Efecto hover en las filas de la tabla */
+.tabla-declinacion tbody tr:hover td {
+    background-color: #f8fafc;
 }
 
 .col-caso {
     font-weight: bold;
     background-color: #f8fafc;
+    color: var(--primary-dark);
 }
 
-.fila-acusativo {
-    background-color: #fdf2f2;
-}
+.fila-acusativo { background-color: #fff5f5; }
+.fila-dativo { background-color: #f0f7ff; }
 
-.texto-acusativo {
-    color: #b91c1c;
-    font-weight: bold;
-}
+.texto-acusativo { color: #c53030; font-weight: bold; }
+.texto-dativo { color: #2b6cb0; font-weight: bold; }
 
-.texto-dativo {
-    color: #1e3a8a;
-    font-weight: bold;
-}
-/* ------------------------------------------- */
-
-/* Contenedor para hacer el video de YouTube responsivo */
+/* --- CONTENEDOR MULTIMEDIA ENVOLVENTE --- */
 .video-container {
     position: relative;
-    padding-bottom: 56.25%; /* Proporción 16:9 */
+    padding-bottom: 56.25%;
     height: 0;
     overflow: hidden;
     border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.video-container:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
 }
 
 .video-container iframe {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0; width: 100%; height: 100%;
+    border: 0;
 }
 
+/* --- CAMPO DE TEXTO E INTERFAZ DEL ESTUDIANTE --- */
+.input-container-nombre {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border-left: 5px solid var(--primary-color);
+    transition: var(--transition);
+}
+
+.input-container-nombre:focus-within {
+    background: #f1f5f9;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.input-container-nombre input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: var(--transition);
+    outline: none;
+}
+
+.input-container-nombre input[type="text"]:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 64, 128, 0.15);
+}
+
+/* --- BLOQUES DE PREGUNTAS INTERACTIVOS --- */
 .pregunta-bloque {
     margin-bottom: 20px;
-    padding: 15px;
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-    background-color: #ffffff;
-    transition: border-left 0.3s ease;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: var(--bg-card);
+    transition: var(--transition);
+}
+
+/* Cuando el alumno interactúa o pasa el mouse por la pregunta */
+.pregunta-bloque:hover {
+    border-color: #cbd5e1;
+    background-color: #fafafa;
 }
 
 .pregunta-bloque p {
     font-weight: 600;
     margin-top: 0;
-    color: #2c3e50;
+    color: var(--text-color);
+    font-size: 1.05rem;
 }
 
+/* Estilización de las opciones de respuesta */
 .opcion {
-    display: block;
-    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
     cursor: pointer;
+    transition: var(--transition);
 }
 
+.opcion:hover {
+    background-color: #edf2f7;
+    transform: translateX(4px);
+    border-color: #cbd5e1;
+}
+
+.opcion input[type="radio"] {
+    margin-right: 12px;
+    transform: scale(1.15);
+    accent-color: var(--primary-color);
+}
+
+/* --- BOTÓN DE EVALUACIÓN --- */
 button {
-    background-color: #28a745;
+    background-color: var(--secondary-color);
     color: white;
     border: none;
-    padding: 15px 20px;
-    font-size: 18px;
+    padding: 16px 20px;
+    font-size: 1.1rem;
     font-weight: bold;
-    border-radius: 5px;
+    border-radius: 6px;
     cursor: pointer;
     display: block;
     width: 100%;
-    margin-top: 25px;
-    transition: background-color 0.2s;
+    margin-top: 30px;
+    box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2);
+    transition: var(--transition);
 }
 
 button:hover {
-    background-color: #218838;
+    background-color: var(--secondary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(40, 167, 69, 0.3);
 }
 
+button:active {
+    transform: translateY(0);
+}
+
+/* --- SECCIÓN DE RESULTADOS --- */
 #resultado {
-    margin-top: 25px;
+    margin-top: 30px;
     padding: 20px;
     font-size: 1.2rem;
     font-weight: bold;
     text-align: center;
-    border-radius: 5px;
+    border-radius: 8px;
+    animation: fadeIn 0.4s ease forwards;
 }
 
-.oculto {
-    display: none;
+/* Historial general de notas */
+#listado-publico {
+    border: 1px solid #cbd5e1 !important;
+    background-color: #f8fafc !important;
 }
 
-.correcto {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+#lista-resultados li {
+    padding: 10px;
+    background: white;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    border-left: 4px solid var(--text-muted);
 }
 
-.regular {
-    background-color: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeeba;
-}
+/* Clases de feedback de respuestas */
+.correcto { background-color: #def7ec; color: #03543f; border: 1px solid #bcf0da; }
+.regular { background-color: #fef08a; color: #713f12; border: 1px solid #fef08a; }
+.incorrecto { background-color: #fde8e8; color: #9b1c1c; border: 1px solid #fbd5d5; }
 
-.incorrecto {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+/* Animación sutil de aparición */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
