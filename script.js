@@ -28,29 +28,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     questions.forEach((q) => {
         const questionDiv = document.createElement('div');
-        // CORRECCIÓN: Ajustado para que coincida exactamente con la clase del CSS
         questionDiv.className = 'pregunta-bloque';
-        questionDiv.style.marginBottom = '15px';
 
         const label = document.createElement('p');
-        label.style.fontWeight = 'bold';
-        label.style.margin = '5px 0';
         label.textContent = q.text;
         questionDiv.appendChild(label);
 
         q.options.forEach((opt) => {
             const optLabel = document.createElement('label');
             optLabel.className = 'opcion';
-            optLabel.style.display = 'block';
-            optLabel.style.marginLeft = '15px';
-            optLabel.style.cursor = 'pointer';
 
             const radio = document.createElement('input');
             radio.type = 'radio';
             radio.name = `pregunta-${q.id}`;
             radio.value = opt;
             radio.required = true;
-            radio.style.marginRight = '8px';
 
             optLabel.appendChild(radio);
             optLabel.appendChild(document.createTextNode(opt));
@@ -109,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 cargarHistorialGlobal();
                 quizForm.reset();
-            }, 1500); // Aumentado ligeramente para dar tiempo a Google Sheets de guardar
+            }, 1500);
         })
         .catch(error => {
             console.error('Error al guardar en la nube:', error);
@@ -120,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function cargarHistorialGlobal() {
         listaResultados.innerHTML = "<li style='color: #003366; font-style: italic;'>Conectando con el servidor de calificaciones...</li>";
 
-        // CORRECCIÓN VITAL: Se añade un timestamp a la URL para evitar que el navegador muestre una versión en caché (vieja) de los datos.
         const urlSinCache = WEB_APP_URL + "?t=" + new Date().getTime();
 
         fetch(urlSinCache)
@@ -144,8 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         historial.slice().reverse().forEach((reg) => {
             const li = document.createElement('li');
-            li.style.padding = '10px';
-            li.style.borderBottom = '1px solid #e2e8f0';
             li.style.display = 'flex';
             li.style.justifyContent = 'space-between';
             li.innerHTML = `<span><strong>Estudiante:</strong> ${reg.nombre}</span> 
