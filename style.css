@@ -157,6 +157,12 @@ img {
     border-left: 5px solid var(--primary-color);
 }
 
+.input-container-nombre label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
 .input-container-nombre input[type="text"] {
     width: 100%;
     padding: 12px;
@@ -164,6 +170,7 @@ img {
     border-radius: 6px;
     font-size: 1rem;
     outline: none;
+    box-sizing: border-box;
 }
 
 .input-container-nombre input[type="text"]:focus {
@@ -220,6 +227,10 @@ button {
     box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2);
 }
 
+button:hover {
+    background-color: var(--secondary-hover);
+}
+
 /* --- SECCIÓN DE RESULTADOS --- */
 #resultado {
     margin-top: 30px;
@@ -231,15 +242,81 @@ button {
 }
 
 #listado-publico {
-    border: 1px solid #cbd5e1 !important;
-    background-color: #f8fafc !important;
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+}
+
+#listado-publico h3 {
+    color: var(--primary-color);
+    border-bottom: 2px solid #cbd5e1;
+    padding-bottom: 5px;
+    margin-top: 0;
+}
+
+#lista-resultados {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
 }
 
 #lista-resultados li {
-    padding: 10px;
+    padding: 12px;
     background: white;
     margin-bottom: 8px;
     border-radius: 6px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     border-left: 4px solid var(--text-muted);
+}
+
+/* --- PIE DE PÁGINA (FOOTER & LICENCIA CC) --- */
+.site-footer {
+    background-color: var(--bg-card);
+    padding: 20px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    margin-top: 30px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.site-footer p {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    line-height: 1.5;
+}
+
+.site-footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.site-footer a:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+/* Alineación de iconos Creative Commons */
+.cc-icons {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    margin-left: 0.3rem;
+}
+
+.cc-icons img {
+    width: 1.2em;
+    height: 1.2em;
+    display: inline-block;
+    vertical-align: middle;
 }
