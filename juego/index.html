@@ -74,6 +74,16 @@ const imgs = {
     jugadorStd: cargarImagen('jugador.png')
 };
 
+// ---------------------------------------------------------------
+// CONFIGURACIÓN DE RESULTADOS
+// Pega aquí la URL de tu aplicación web de Google Apps Script
+// (termina en /exec). Si la dejas vacía, el juego funciona igual
+// pero no guarda resultados en la nube.
+// ---------------------------------------------------------------
+const URL_RESULTADOS = "https://script.google.com/macros/s/AKfycbx17OqLKoP1G4A0rFGwLjYyIAIAfXIZzc-y8G-Rxk_uDcXZAmxRxqaG-tGiSQnUMjLFuA/exec";
+const CLANES = ["Der", "Die", "Das", "Dem"];
+const NOMBRES_MUNDO = { Nom: "Nominativ", Akk: "Akkusativ", Dat: "Dativ", ALL: "Meister" };
+
 // Banco de preguntas
 const bancoPreguntas = [
     {q: "Er hilft dem ___ Mann.", o: ["alte", "alter", "alten"], a: "c", k: "Dat", r: "Dativ + maskulin + definit → -en"},
@@ -273,7 +283,7 @@ class Moneda {
 }
 
 // Variables de estado del juego
-let estado = "MENU_INICIAL";
+let estado = "NOMBRE";
 let jugador = null;
 let plataformas = [];
 let monedas = [];
@@ -296,6 +306,14 @@ let tecladoBuffer = "";
 let ultimoError = null;
 let sonidoGoDisparado = false;
 let sonidoWinDisparado = false;
+let nombreJugador = "";
+let clanJugador = "Der";
+let tiempoMs = 0;            // tiempo activo de juego (sin pausa)
+let trucoUsado = false;      // modo profesor: no se guarda el resultado
+let resultadoGuardado = false;
+let estadoGuardado = "";     // "", "enviando", "enviado", "error", "local", "truco"
+let ranking = null;          // null = sin datos, [] = vacío, [..] = top 5
+let cargandoRanking = false;
 
 const teclas = {};
 
@@ -306,8 +324,9 @@ window.addEventListener('keydown', (e) => {
     if (e.repeat) return; // ignora teclas mantenidas
     if (e.key.length === 1) tecladoBuffer = (tecladoBuffer + e.key).slice(-30);
     // Modo profesor (código secreto para pruebas): gana la partida al instante
-    if (tecladoBuffer.toLowerCase().includes("merequetengue")) {
+    if (estado === "JUGANDO" && tecladoBuffer.toLowerCase().includes("merequetengue")) {
         esCampeon = true;
+        trucoUsado = true;
     }
     manejadorTeclas(e.key, e.code);
 });
@@ -332,6 +351,12 @@ function reiniciarJuego(imgData, filtro) {
     sonidoWinDisparado = false;
     tecladoBuffer = "";
     ultimoError = null;
+    tiempoMs = 0;
+    trucoUsado = false;
+    resultadoGuardado = false;
+    estadoGuardado = "";
+    ranking = null;
+    cargandoRanking = false;
 
     detenerMusica();
 
@@ -382,8 +407,25 @@ function capturarFrame() {
 }
 
 function manejadorTeclas(key, code) {
-    if (estado === "MENU_INICIAL") {
-        if (key.toLowerCase() === 'k') {
+    if (estado === "NOMBRE") {
+        if (code === 'Enter') {
+            if (nombreJugador.trim().length >= 2) estado = "CLAN";
+        } else if (code === 'Backspace') {
+            nombreJugador = nombreJugador.slice(0, -1);
+        } else if (key.length === 1 && nombreJugador.length < 20 && /[\p{L}\p{N} _.\-]/u.test(key)) {
+            nombreJugador += key;
+        }
+    } else if (estado === "CLAN") {
+        if (key >= '1' && key <= '4') {
+            clanJugador = CLANES[parseInt(key, 10) - 1];
+            estado = "MENU_INICIAL";
+        } else if (code === 'Escape') {
+            estado = "NOMBRE";
+        }
+    } else if (estado === "MENU_INICIAL") {
+        if (key.toLowerCase() === 'n' && !capturandoFoto) {
+            estado = "NOMBRE";
+        } else if (key.toLowerCase() === 'k') {
             if (!capturandoFoto) activarCamara();
         } else if (key.toLowerCase() === 's') {
             detenerCamara();
@@ -515,6 +557,95 @@ function actualizarJuego() {
         }
 }
 
+// ---------- Resultados y tiempo ----------
+function formatoTiempo(ms) {
+    const t = Math.floor(ms / 100) / 10;
+    const m = Math.floor(t / 60);
+    const sg = (t - m * 60).toFixed(1).padStart(4, '0');
+    return String(m).padStart(2, '0') + ":" + sg;
+}
+
+function guardarResultado() {
+    if (trucoUsado) { estadoGuardado = "truco"; return; }
+    if (!URL_RESULTADOS) { estadoGuardado = "local"; return; }
+    const mundo = NOMBRES_MUNDO[filtroKasus];
+    const registro = {
+        nombre: nombreJugador.trim(),
+        clan: clanJugador,
+        mundo: mundo,
+        resultado: esCampeon ? "ganado" : "perdido",
+        aciertos: score,
+        total: listaQuiz.length,
+        vidas: Math.max(vidas, 0),
+        tiempo_s: Math.round(tiempoMs / 100) / 10
+    };
+    estadoGuardado = "enviando";
+    fetch(URL_RESULTADOS, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(registro)
+    })
+    .then(() => {
+        estadoGuardado = "enviado";
+        setTimeout(() => cargarRanking(mundo), 1200);
+    })
+    .catch(() => { estadoGuardado = "error"; });
+}
+
+function cargarRanking(mundo) {
+    if (!URL_RESULTADOS) return;
+    cargandoRanking = true;
+    fetch(URL_RESULTADOS + "?mundo=" + encodeURIComponent(mundo) + "&t=" + Date.now())
+        .then(r => r.json())
+        .then(datos => { ranking = Array.isArray(datos) ? datos.slice(0, 5) : []; cargandoRanking = false; })
+        .catch(() => { ranking = null; cargandoRanking = false; });
+}
+
+function dibujarResumen(titulo) {
+    ctx.textAlign = "center";
+    const cx = ANCHO / 2;
+    ctx.fillStyle = "white";
+    ctx.font = "bold 56px Arial";
+    ctx.fillText(titulo, cx, 90);
+    ctx.font = "22px Arial";
+    ctx.fillText(`${nombreJugador.trim()} (Clan ${clanJugador}) · Welt: ${NOMBRES_MUNDO[filtroKasus]}`, cx, 140);
+    ctx.fillText(`Punkte: ${score}/${listaQuiz.length}   ·   Leben: ${Math.max(vidas, 0)}   ·   Zeit: ${formatoTiempo(tiempoMs)}`, cx, 180);
+
+    ctx.font = "18px Arial";
+    const textos = {
+        enviando: "Ergebnis wird gespeichert…",
+        enviado: "Ergebnis gespeichert ✓",
+        error: "Verbindungsfehler: Ergebnis nicht gespeichert",
+        local: "Ergebnisse werden in dieser Version nicht gespeichert",
+        truco: "Lehrermodus: Ergebnis wird nicht gespeichert"
+    };
+    ctx.fillText(textos[estadoGuardado] || "", cx, 215);
+
+    if (URL_RESULTADOS && estadoGuardado !== "truco") {
+        ctx.fillStyle = "#FFD700";
+        ctx.font = "bold 22px Arial";
+        ctx.fillText(`TOP 5 – Welt ${NOMBRES_MUNDO[filtroKasus]} (schnellste Zeiten)`, cx, 265);
+        ctx.fillStyle = "white";
+        ctx.font = "20px Arial";
+        if (ranking && ranking.length > 0) {
+            ranking.forEach((r, k) => {
+                const t = formatoTiempo(Number(r.tiempo_s) * 1000);
+                ctx.fillText(`${k + 1}. ${r.nombre} (${r.clan}) – ${t}`, cx, 300 + k * 32);
+            });
+        } else if (cargandoRanking || estadoGuardado === "enviando" || estadoGuardado === "enviado") {
+            ctx.fillText("Rangliste wird geladen…", cx, 300);
+        } else if (ranking && ranking.length === 0) {
+            ctx.fillText("Noch keine Zeiten in dieser Welt.", cx, 300);
+        }
+    }
+
+    ctx.fillStyle = "white";
+    ctx.font = "24px Arial";
+    ctx.fillText("[R]estart", cx, 510);
+    ctx.textAlign = "left";
+}
+
 // Loop Principal
 const PASO = 1000 / 60;
 let ultimoTiempo = performance.now();
@@ -524,13 +655,54 @@ function gameLoop(ahora) {
     acumulador += Math.min(ahora - ultimoTiempo, 250);
     ultimoTiempo = ahora;
     while (acumulador >= PASO) {
-        if (estado === "JUGANDO") actualizarJuego();
+        if (estado === "JUGANDO") {
+            actualizarJuego();
+            if (!pausado && !jugador.gameOver && !esCampeon) tiempoMs += PASO;
+        }
         acumulador -= PASO;
+    }
+    if (estado === "JUGANDO" && (jugador.gameOver || esCampeon) && !resultadoGuardado) {
+        resultadoGuardado = true;
+        guardarResultado();
     }
 
     ctx.clearRect(0, 0, ANCHO, ALTO);
 
-    if (estado === "MENU_INICIAL") {
+    if (estado === "NOMBRE") {
+        ctx.fillStyle = "#0A0A1E";
+        ctx.fillRect(0, 0, ANCHO, ALTO);
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#FFD700";
+        ctx.font = "bold 44px Arial";
+        ctx.fillText("WIE HEISST DU?", ANCHO / 2, 120);
+        ctx.fillStyle = "white";
+        ctx.font = "bold 40px Arial";
+        const cursor = (Math.floor(performance.now() / 500) % 2 === 0) ? "_" : " ";
+        ctx.fillText(nombreJugador + cursor, ANCHO / 2, 250);
+        ctx.font = "20px Arial";
+        ctx.fillText("Schreibe deinen Namen (oder Spitznamen) und drücke [ENTER]", ANCHO / 2, 340);
+        ctx.fillStyle = "#CCCCCC";
+        ctx.font = "16px Arial";
+        ctx.fillText(URL_RESULTADOS ? "Dein Name, dein Clan, deine Punkte und deine Zeit werden am Ende gespeichert."
+                                    : "In dieser Version werden keine Ergebnisse gespeichert.", ANCHO / 2, 400);
+        ctx.textAlign = "left";
+    }
+    else if (estado === "CLAN") {
+        ctx.fillStyle = "#141E32";
+        ctx.fillRect(0, 0, ANCHO, ALTO);
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#FFD700";
+        ctx.font = "bold 44px Arial";
+        ctx.fillText("WÄHLE DEINEN CLAN", ANCHO / 2, 110);
+        ctx.fillStyle = "white";
+        ctx.font = "28px Arial";
+        CLANES.forEach((c, k) => ctx.fillText(`[${k + 1}] Clan ${c}`, ANCHO / 2, 220 + k * 60));
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "#CCCCCC";
+        ctx.fillText("[ESC] Name ändern", ANCHO / 2, 500);
+        ctx.textAlign = "left";
+    }
+    else if (estado === "MENU_INICIAL") {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, ANCHO, ALTO);
 
@@ -547,9 +719,11 @@ function gameLoop(ahora) {
             ctx.fillText("Drücke [K] für Kamera-Foto oder [S] für Standard-Sprite", 200, 220);
             ctx.fillText("Steuerung: Pfeiltasten (← → bewegen, ↑ springen)", 200, 280);
             ctx.fillText("Antworten im Quiz: Tasten [A], [B] oder [C]", 200, 340);
+            ctx.fillStyle = "#FFD700";
+            ctx.fillText(`Spieler: ${nombreJugador.trim()} (Clan ${clanJugador})  –  [N] ändern`, 200, 400);
             if (errorCamara) {
                 ctx.fillStyle = "red";
-                ctx.fillText("Kamera nicht gefunden! Bitte [S] drücken.", 250, 420);
+                ctx.fillText("Kamera nicht gefunden! Bitte [S] drücken.", 250, 450);
             }
         }
     } 
@@ -597,6 +771,8 @@ function gameLoop(ahora) {
         ctx.fillStyle = "white";
         ctx.font = "24px Arial";
         ctx.fillText(`Punkte: ${score}/${listaQuiz.length}`, 780, 40);
+        ctx.fillStyle = "white";
+        ctx.fillText(`Zeit: ${formatoTiempo(tiempoMs)}`, 420, 40);
         ctx.fillStyle = "#FF6B6B";
         ctx.fillText(`Leben: ${vidas > 0 ? "❤️ ".repeat(vidas) : "❌"}`, 40, 40);
 
@@ -606,13 +782,9 @@ function gameLoop(ahora) {
                 sonidos.win.play().catch(() => {});
                 sonidoWinDisparado = true;
             }
-            ctx.fillStyle = "rgba(255, 215, 0, 0.8)";
+            ctx.fillStyle = "rgba(190, 140, 0, 0.92)";
             ctx.fillRect(0, 0, ANCHO, ALTO);
-            ctx.fillStyle = "white";
-            ctx.font = "bold 60px Arial";
-            ctx.fillText("CHAMPION!", 300, 200);
-            ctx.font = "24px Arial";
-            ctx.fillText("[R]estart", 420, 380);
+            dibujarResumen("CHAMPION!");
         } 
         else if (jugador.gameOver) {
             detenerMusica();
@@ -620,14 +792,9 @@ function gameLoop(ahora) {
                 sonidos.gameover.play().catch(() => {});
                 sonidoGoDisparado = true;
             }
-            ctx.fillStyle = "rgba(150, 0, 0, 0.8)";
+            ctx.fillStyle = "rgba(150, 0, 0, 0.92)";
             ctx.fillRect(0, 0, ANCHO, ALTO);
-            ctx.fillStyle = "white";
-            ctx.font = "bold 60px Arial";
-            ctx.fillText("GAME OVER", 280, 200);
-            ctx.font = "24px Arial";
-            ctx.fillText(`Punkte: ${score}/${listaQuiz.length}`, 410, 280);
-            ctx.fillText("[R]estart", 420, 380);
+            dibujarResumen("GAME OVER");
         } 
         else if (estadoExplicacion && ultimoError) {
             ctx.fillStyle = "rgba(40, 0, 0, 0.9)";
