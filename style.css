@@ -320,3 +320,39 @@ button:hover {
     display: inline-block;
     vertical-align: middle;
 }
+
+
+/* --- NAVEGACIÓN SUAVE Y ENLACES DEL ENCABEZADO --- */
+html { scroll-behavior: smooth; }
+
+.header-enlaces {
+    margin: 1rem 0 0;
+    font-size: 1rem;
+}
+
+.header-enlaces a {
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* --- SECCIÓN DEL JUEGO --- */
+.btn-jugar {
+    display: block;
+    text-align: center;
+    background-color: var(--secondary-color);
+    color: #ffffff;
+    padding: 16px 20px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-radius: 6px;
+    text-decoration: none;
+    margin-top: 25px;
+    box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2);
+}
+
+.btn-jugar:hover,
+.btn-jugar:focus {
+    background-color: var(--secondary-hover);
+}
