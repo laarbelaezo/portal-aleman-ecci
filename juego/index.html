@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Deklinationsspiel</title>
+    <style>
+        body {
+            background-color: #111;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        canvas {
+            border: 2px solid #fff;
+            background-color: #87CEEB;
+            box-sizing: border-box;
+            width: min(100vw, calc(100vh * 16 / 9));
+            height: auto;
+        }
+        video {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="gameCanvas" width="960" height="540"></canvas>
+<video id="webcam" width="400" height="400" autoplay playsinline></video>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const video = document.getElementById('webcam');
+
+const ANCHO = 960;
+const ALTO = 540;
+
+// Carga de Sonidos
+const sonidos = {
+    jump: new Audio('jump.wav'),
+    gameover: new Audio('gameover.wav'),
+    win: new Audio('win.wav')
+};
+const musicaFondo = new Audio('music.wav');
+musicaFondo.loop = true;
+
+function iniciarMusica() {
+    musicaFondo.play().catch(() => {});
+}
+function pausarMusica() {
+    musicaFondo.pause();
+}
+function detenerMusica() {
+    musicaFondo.pause();
+    musicaFondo.currentTime = 0;
+}
+
+// Carga de Imágenes
+function cargarImagen(src) {
+    const img = new Image();
+    img.src = src;
+    return img;
+}
+
+const imgs = {
+    fondo: cargarImagen('fondo.png'),
+    piso: cargarImagen('piso.png'),
+    bloque: cargarImagen('bloque.png'),
+    moneda: cargarImagen('question.png'),
+    jugadorStd: cargarImagen('jugador.png')
+};
+
+// Banco de preguntas
+const bancoPreguntas = [
+    {q: "Er hilft dem ___ Mann.", o: ["alte", "alter", "alten"], a: "c", k: "Dat", r: "Dativ + maskulin + definit → -en"},
+    {q: "Das ist ein ___ Auto.", o: ["neue", "neues", "neuen"], a: "b", k: "Nom", r: "Nominativ + neutrum + indefinit → -es"},
+    {q: "Wir trinken ___ Kaffee.", o: ["heißen", "heißer", "heiße"], a: "a", k: "Akk", r: "Akkusativ + maskulin + Nullartikel → -en"},
+    {q: "Der ___ Hund bellt.", o: ["großer", "große", "großen"], a: "b", k: "Nom", r: "Nominativ + maskulin + definit → -e"},
+    {q: "Ich sehe den ___ Film.", o: ["gute", "guter", "guten"], a: "c", k: "Akk", r: "Akkusativ + maskulin + definit → -en"},
+    {q: "Sie kauft eine ___ Tasche.", o: ["schönen", "schöne", "schöner"], a: "b", k: "Akk", r: "Akkusativ + feminin + indefinit → -e"},
+    {q: "Mit ___ Freude feiern wir.", o: ["große", "großen", "großer"], a: "c", k: "Dat", r: "Dativ + feminin + Nullartikel → -er"},
+    {q: "Das ___ Kind spielt im Garten.", o: ["kleines", "kleine", "kleinen"], a: "b", k: "Nom", r: "Nominativ + neutrum + definit → -e"},
+    {q: "Er wohnt in einem ___ Haus.", o: ["alten", "altes", "alte"], a: "a", k: "Dat", r: "Dativ + neutrum + indefinit → -en"},
+    {q: "Wir essen ___ Brot.", o: ["frische", "frisches", "frischen"], a: "b", k: "Akk", r: "Akkusativ + neutrum + Nullartikel → -es"},
+    {q: "Die ___ Frauen sprechen Deutsch.", o: ["junge", "junger", "jungen"], a: "c", k: "Nom", r: "Nominativ + Plural + definit → -en"},
+    {q: "Ich kenne keinen ___ Mann.", o: ["nette", "netter", "netten"], a: "c", k: "Akk", r: "Akkusativ + maskulin + kein → -en"},
+    {q: "Ich trinke gerne ___ Milch.", o: ["kalte", "kalten", "kalter"], a: "a", k: "Akk", r: "Akkusativ + feminin + Nullartikel → -e"},
+    {q: "Der ___ Mantel ist sehr teuer.", o: ["schwarze", "schwarzer", "schwarzen"], a: "a", k: "Nom", r: "Nominativ + maskulin + definit → -e"},
+    {q: "Ich habe ein ___ Buch gekauft.", o: ["interessantes", "interessante", "interessanten"], a: "a", k: "Akk", r: "Akkusativ + neutrum + indefinit → -es"},
+    {q: "Aus ___ Holz bauen wir den Tisch.", o: ["harte", "hartes", "hartem"], a: "c", k: "Dat", r: "Dativ + neutrum + Nullartikel → -em"},
+    {q: "Die ___ Kinder lachen laut.", o: ["kleine", "kleinen", "kleiner"], a: "b", k: "Nom", r: "Nominativ + Plural + definit → -en"},
+    {q: "Sie gibt der ___ Frau die Hand.", o: ["alte", "alten", "alter"], a: "b", k: "Dat", r: "Dativ + feminin + definit → -en"},
+    {q: "Er hat ein ___ Haus.", o: ["schöne", "schönen", "schönes"], a: "c", k: "Akk", r: "Akkusativ + neutrum + indefinit → -es"},
+    {q: "Wir hören ___ Musik.", o: ["laute", "lauten", "lauter"], a: "a", k: "Akk", r: "Akkusativ + feminin + Nullartikel → -e"},
+    {q: "Das ___ Fahrrad ist rot.", o: ["neue", "neues", "neuen"], a: "a", k: "Nom", r: "Nominativ + neutrum + definit → -e"},
+    {q: "Ich suche einen ___ Bleistift.", o: ["rote", "roten", "roter"], a: "b", k: "Akk", r: "Akkusativ + maskulin + indefinit → -en"},
+    {q: "Nach ___ Arbeit geht er nach Hause.", o: ["harte", "harten", "harter"], a: "c", k: "Dat", r: "Dativ + feminin + Nullartikel → -er"},
+    {q: "Den ___ Hund mag ich sehr.", o: ["kleinen", "kleine", "kleiner"], a: "a", k: "Akk", r: "Akkusativ + maskulin + definit → -en"},
+    {q: "Ein ___ Mann steht an der Tür.", o: ["alte", "alter", "alten"], a: "b", k: "Nom", r: "Nominativ + maskulin + indefinit → -er"},
+    {q: "Wir trinken am Nachmittag ___ Tee.", o: ["grünen", "grüne", "grüner"], a: "a", k: "Akk", r: "Akkusativ + maskulin + Nullartikel → -en"},
+    {q: "Die ___ Blume riecht wunderbar.", o: ["rote", "roten", "roter"], a: "a", k: "Nom", r: "Nominativ + feminin + definit → -e"},
+    {q: "Er sucht seine ___ Brille.", o: ["neue", "neuen", "neuer"], a: "a", k: "Akk", r: "Akkusativ + feminin + Possessiv → -e"},
+    {q: "Bei ___ Wetter bleiben wir zu Hause.", o: ["schlechte", "schlechtem", "schlechter"], a: "b", k: "Dat", r: "Dativ + neutrum + Nullartikel → -em"},
+    {q: "Zu dem ___ Mann gehört dieser Hund.", o: ["freundlichen", "freundliche", "freundlicher"], a: "a", k: "Dat", r: "Dativ + maskulin + definit → -en"},
+    {q: "Sie hat ein ___ Kleid gekauft.", o: ["elegante", "elegantes", "eleganten"], a: "b", k: "Akk", r: "Akkusativ + neutrum + indefinit → -es"},
+    {q: "Guter Käse schmeckt gut mit ___ Wein.", o: ["roten", "rote", "rotem"], a: "c", k: "Dat", r: "Dativ + maskulin + Nullartikel → -em"},
+    {q: "Ich sehe die ___ Katzen im Garten.", o: ["schwarzen", "schwarze", "schwarzer"], a: "a", k: "Akk", r: "Akkusativ + Plural + definit → -en"},
+    {q: "Kein ___ Mensch würde das tun.", o: ["kluger", "kluge", "klugen"], a: "a", k: "Nom", r: "Nominativ + maskulin + kein → -er"},
+    {q: "Wir essen ___ Käse zum Frühstück.", o: ["französischen", "französische", "französischer"], a: "a", k: "Akk", r: "Akkusativ + maskulin + Nullartikel → -en"},
+    {q: "Das ___ Bett ist sehr bequem.", o: ["weichen", "weicher", "weiche"], a: "c", k: "Nom", r: "Nominativ + neutrum + definit → -e"},
+    {q: "Wir wohnen in einer ___ Stadt.", o: ["großen", "große", "großer"], a: "a", k: "Dat", r: "Dativ + feminin + indefinit → -en"},
+    {q: "Sie trinkt morgens ___ Saft.", o: ["frischen", "frische", "frischer"], a: "a", k: "Akk", r: "Akkusativ + maskulin + Nullartikel → -en"},
+    {q: "Der ___ Lehrer erklärt die Grammatik.", o: ["nette", "netter", "netten"], a: "a", k: "Nom", r: "Nominativ + maskulin + definit → -e"},
+    {q: "Ich habe einen ___ Computer gekauft.", o: ["schnellen", "schnelle", "schneller"], a: "a", k: "Akk", r: "Akkusativ + maskulin + indefinit → -en"},
+    {q: "Mit ___ Mut schaffst du das.", o: ["großem", "großen", "großer"], a: "a", k: "Dat", r: "Dativ + maskulin + Nullartikel → -em"},
+    {q: "Die ___ Schule ist sehr modern.", o: ["neue", "neuen", "neuer"], a: "a", k: "Nom", r: "Nominativ + feminin + definit → -e"},
+    {q: "Ein ___ Hund braucht viel Auslauf.", o: ["aktive", "aktiver", "aktiven"], a: "b", k: "Nom", r: "Nominativ + maskulin + indefinit → -er"},
+    {q: "Sie kaufen auf dem Markt ___ Gemüse.", o: ["frische", "frischen", "frisches"], a: "c", k: "Akk", r: "Akkusativ + neutrum + Nullartikel → -es"},
+    {q: "Er dankt dem ___ Helfer.", o: ["fleißigen", "fleißige", "fleißiger"], a: "a", k: "Dat", r: "Dativ + maskulin + definit → -en"},
+    {q: "Es war ein ___ Tag im Sommer.", o: ["schöne", "schönen", "schöner"], a: "c", k: "Nom", r: "Nominativ + maskulin + indefinit → -er"},
+    {q: "___ Menschen helfen einander.", o: ["guten", "guter", "gute"], a: "c", k: "Nom", r: "Nominativ + Plural + Nullartikel → -e"},
+    {q: "Ich besuche den ___ Onkel im Krankenhaus.", o: ["kranken", "kranke", "kranker"], a: "a", k: "Akk", r: "Akkusativ + maskulin + definit → -en"},
+    {q: "Wir suchen eine ___ Wohnung.", o: ["günstigen", "günstige", "günstiger"], a: "b", k: "Akk", r: "Akkusativ + feminin + indefinit → -e"},
+    {q: "Aus ___ Quelle fließt klares Wasser.", o: ["reiner", "reine", "reinen"], a: "a", k: "Dat", r: "Dativ + feminin + Nullartikel → -er"},
+    {q: "Das ___ Kind schläft ruhig im Bett.", o: ["kleiner", "kleines", "kleine"], a: "c", k: "Nom", r: "Nominativ + neutrum + definit → -e"},
+    {q: "Sie schreibt mit einem ___ Stift.", o: ["blauen", "blaue", "blauer"], a: "a", k: "Dat", r: "Dativ + maskulin + indefinit → -en"},
+    {q: "Wir trinken gerne ___ Bier.", o: ["kühle", "kühlen", "kühles"], a: "c", k: "Akk", r: "Akkusativ + neutrum + Nullartikel → -es"},
+    {q: "In der ___ Nacht war es sehr kalt.", o: ["dunkle", "dunkler", "dunklen"], a: "c", k: "Dat", r: "Dativ + feminin + definit → -en"},
+    {q: "Er schenkt seiner Frau einen ___ Ring.", o: ["teure", "teurer", "teuren"], a: "c", k: "Akk", r: "Akkusativ + maskulin + indefinit → -en"},
+    {q: "___ Suppe schmeckt besonders gut im Winter.", o: ["heißen", "heißer", "heiße"], a: "c", k: "Nom", r: "Nominativ + feminin + Nullartikel → -e"},
+    {q: "Der ___ Arzt untersucht den Patienten.", o: ["erfahrene", "erfahrener", "erfahrenen"], a: "a", k: "Nom", r: "Nominativ + maskulin + definit → -e"},
+    {q: "Möchtest du ein ___ Eis?", o: ["leckere", "leckeren", "leckeres"], a: "c", k: "Akk", r: "Akkusativ + neutrum + indefinit → -es"},
+    {q: "Sie helfen ___ Frau über die Straße.", o: ["arme", "armer", "armen"], a: "b", k: "Dat", r: "Dativ + feminin + Nullartikel → -er"},
+    {q: "Die ___ Tiere leben geschützt im Wald.", o: ["wilde", "wilder", "wilden"], a: "c", k: "Nom", r: "Nominativ + Plural + definit → -en"},
+    {q: "Ich habe ein ___ Bild gemalt.", o: ["schönes", "schöne", "schönen"], a: "a", k: "Akk", r: "Akkusativ + neutrum + indefinit → -es"},
+    {q: "Wir trinken ___ Kaffee ohne Zucker.", o: ["starke", "starken", "starker"], a: "b", k: "Akk", r: "Akkusativ + maskulin + Nullartikel → -en"},
+    {q: "Glaubst du an den ___ Erfolg?", o: ["großen", "große", "großer"], a: "a", k: "Akk", r: "Akkusativ + maskulin + definit → -en"},
+    {q: "Ein ___ Hund bellt im Hof.", o: ["fremder", "fremde", "fremden"], a: "a", k: "Nom", r: "Nominativ + maskulin + indefinit → -er"},
+    {q: "Mit ___ Geduld erreicht man das Ziel.", o: ["großer", "große", "großen"], a: "a", k: "Dat", r: "Dativ + feminin + Nullartikel → -er"},
+    {q: "Das ___ Buch liegt auf dem Tisch.", o: ["rote", "rotes", "roten"], a: "a", k: "Nom", r: "Nominativ + neutrum + definit → -e"},
+    {q: "Er fährt mit einem ___ Bus zur Arbeit.", o: ["gelbe", "gelber", "gelben"], a: "c", k: "Dat", r: "Dativ + maskulin + indefinit → -en"},
+    {q: "Sie mag ___ Schokolade besonders gern.", o: ["dunkle", "dunklen", "dunkler"], a: "a", k: "Akk", r: "Akkusativ + feminin + Nullartikel → -e"},
+    {q: "Der ___ Stuhl ist leider kaputt.", o: ["alter", "alten", "alte"], a: "c", k: "Nom", r: "Nominativ + maskulin + definit → -e"},
+    {q: "Ich kaufe einen ___ Tisch für die Küche.", o: ["neue", "neuen", "neuer"], a: "b", k: "Akk", r: "Akkusativ + maskulin + indefinit → -en"},
+    {q: "Bei ___ Regen bleibe ich lieber drinnen.", o: ["starkem", "starken", "starker"], a: "a", k: "Dat", r: "Dativ + maskulin + Nullartikel → -em"},
+    {q: "Aus dem ___ Haus ertönt laute Musik.", o: ["großen", "große", "großer"], a: "a", k: "Dat", r: "Dativ + neutrum + definit → -en"},
+    {q: "Sie sucht ein ___ Zimmer im Zentrum.", o: ["ruhige", "ruhigen", "ruhiges"], a: "c", k: "Akk", r: "Akkusativ + neutrum + indefinit → -es"},
+    {q: "___ Wein passt gut zu dunklem Fleisch.", o: ["roter", "rote", "roten"], a: "a", k: "Nom", r: "Nominativ + maskulin + Nullartikel → -er"},
+    {q: "Die ___ Äpfel schmecken sehr süß.", o: ["rote", "roter", "roten"], a: "c", k: "Nom", r: "Nominativ + Plural + definit → -en"},
+    {q: "Er antwortet einer ___ Studentin.", o: ["fleißige", "fleißigen", "fleißiger"], a: "b", k: "Dat", r: "Dativ + feminin + indefinit → -en"},
+    {q: "Im Winter tragen wir ___ Kleidung.", o: ["warme", "warmen", "warmer"], a: "a", k: "Akk", r: "Akkusativ + feminin + Nullartikel → -e"},
+    {q: "Ich nehme den ___ Zug nach Berlin.", o: ["nächste", "nächster", "nächsten"], a: "c", k: "Akk", r: "Akkusativ + maskulin + definit → -en"},
+    {q: "Dort steht ein ___ Gebäude.", o: ["moderne", "modernes", "modernen"], a: "b", k: "Nom", r: "Nominativ + neutrum + indefinit → -es"},
+    {q: "Nach ___ Essen gehen wir spazieren.", o: ["gute", "guten", "gutem"], a: "c", k: "Dat", r: "Dativ + neutrum + Nullartikel → -em"},
+    {q: "Dem ___ Mann gehört dieses Fahrrad.", o: ["freundliche", "freundlichen", "freundlicher"], a: "b", k: "Dat", r: "Dativ + maskulin + definit → -en"},
+    {q: "Ich kenne eine ___ Kellnerin im Café.", o: ["netten", "nette", "netter"], a: "b", k: "Akk", r: "Akkusativ + feminin + indefinit → -e"},
+    {q: "Wir kaufen ___ Brot beim Bäcker.", o: ["frisches", "frische", "frischen"], a: "a", k: "Akk", r: "Akkusativ + neutrum + Nullartikel → -es"},
+    {q: "Das ___ Hemd ist sauber gewaschen.", o: ["weißes", "weiße", "weißen"], a: "b", k: "Nom", r: "Nominativ + neutrum + definit → -e"},
+    {q: "Sie wohnt in einem ___ Dorf in den Bergen.", o: ["kleine", "kleines", "kleinen"], a: "c", k: "Dat", r: "Dativ + neutrum + indefinit → -en"},
+    {q: "___ Kaffee schmeckt mir am besten.", o: ["schwarze", "schwarzen", "schwarzer"], a: "c", k: "Nom", r: "Nominativ + maskulin + Nullartikel → -er"},
+    {q: "Ich helfe den ___ Nachbarn im Garten.", o: ["nette", "netten", "netter"], a: "b", k: "Dat", r: "Dativ + Plural + definit → -en"},
+    {q: "Er liest ein ___ Buch über Geschichte.", o: ["spannendes", "spannende", "spannenden"], a: "a", k: "Akk", r: "Akkusativ + neutrum + indefinit → -es"},
+    {q: "Mit ___ Mut hat er das Problem gelöst.", o: ["große", "großen", "großem"], a: "c", k: "Dat", r: "Dativ + maskulin + Nullartikel → -em"},
+    {q: "Die ___ Katze schläft den ganzen Tag.", o: ["fauler", "faule", "faulen"], a: "b", k: "Nom", r: "Nominativ + feminin + definit → -e"},
+    {q: "Er besucht einen ___ Freund im Ausland.", o: ["alte", "alten", "alter"], a: "b", k: "Akk", r: "Akkusativ + maskulin + indefinit → -en"},
+    {q: "Sie kauft ___ Äpfel im Supermarkt.", o: ["frische", "frischen", "frischer"], a: "a", k: "Akk", r: "Akkusativ + Plural + Nullartikel → -e"},
+    {q: "Wir danken der ___ Lehrerin für die Hilfe.", o: ["geduldige", "geduldiger", "geduldigen"], a: "c", k: "Dat", r: "Dativ + feminin + definit → -en"},
+    {q: "Kein ___ Fehler wurde in der Prüfung gemacht.", o: ["großer", "große", "großen"], a: "a", k: "Nom", r: "Nominativ + maskulin + kein → -er"},
+    {q: "Aus ___ Holz wird der Schrank gefertigt.", o: ["edle", "edles", "edlem"], a: "c", k: "Dat", r: "Dativ + neutrum + Nullartikel → -em"},
+    {q: "Den ___ Schlüssel finde ich leider nicht.", o: ["richtige", "richtigen", "richtiger"], a: "b", k: "Akk", r: "Akkusativ + maskulin + definit → -en"},
+    {q: "Das ist ein ___ Spiel für Kinder.", o: ["lustiges", "lustige", "lustigen"], a: "a", k: "Nom", r: "Nominativ + neutrum + indefinit → -es"},
+    {q: "Wir fahren bei ___ Wetter an den See.", o: ["schöne", "schönem", "schöner"], a: "b", k: "Dat", r: "Dativ + neutrum + Nullartikel → -em"},
+    {q: "Die ___ Dame betritt das Restaurant.", o: ["eleganter", "elegante", "eleganten"], a: "b", k: "Nom", r: "Nominativ + feminin + definit → -e"},
+    {q: "Er schenkt ihr eine ___ Blume.", o: ["wunderschöne", "wunderschönen", "wunderschöner"], a: "a", k: "Akk", r: "Akkusativ + feminin + indefinit → -e"}
+];
+
+// Utilidades: mezcla uniforme (Fisher-Yates) y opciones barajadas
+function barajar(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+function prepararPregunta(q) {
+    const letras = ['a', 'b', 'c'];
+    const correcta = q.o[letras.indexOf(q.a)];
+    const opciones = barajar(q.o);
+    return { ...q, o: opciones, a: letras[opciones.indexOf(correcta)] };
+}
+
+// Clases del juego
+class Jugador {
+    constructor(x, y, img) {
+        this.x = x;
+        this.y = y;
+        this.ancho = 40;
+        this.alto = 60;
+        this.velY = 0;
+        this.gravedad = 0.8;
+        this.enSuelo = false;
+        this.gameOver = false;
+        this.img = img;
+    }
+
+    update(plataformas, teclas) {
+        if (teclas['ArrowLeft']) this.x -= 7;
+        if (teclas['ArrowRight']) this.x += 7;
+        if (teclas['ArrowUp'] && this.enSuelo) {
+            this.velY = -18;
+            sonidos.jump.currentTime = 0;
+            sonidos.jump.play().catch(() => {});
+        }
+
+        this.velY += this.gravedad;
+        this.y += this.velY;
+        this.enSuelo = false;
+
+        for (let p of plataformas) {
+            if (this.x < p.x + p.ancho && this.x + this.ancho > p.x &&
+                this.y < p.y + p.alto && this.y + this.alto > p.y) {
+                if (this.velY > 0) {
+                    this.y = p.y - this.alto;
+                    this.velY = 0;
+                    this.enSuelo = true;
+                }
+            }
+        }
+        if (this.y > 600) this.gameOver = true;
+    }
+
+    draw(camaraX) {
+        if (this.img) {
+            ctx.drawImage(this.img, this.x - camaraX, this.y, this.ancho, this.alto);
+        } else {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(this.x - camaraX, this.y, this.ancho, this.alto);
+        }
+    }
+}
+
+class Plataforma {
+    constructor(x, y, ancho, alto, img) {
+        this.x = x; this.y = y; this.ancho = ancho; this.alto = alto; this.img = img;
+    }
+    draw(camaraX) {
+        if (this.img.complete && this.img.naturalWidth !== 0) {
+            ctx.drawImage(this.img, this.x - camaraX, this.y, this.ancho, this.alto);
+        } else {
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(this.x - camaraX, this.y, this.ancho, this.alto);
+        }
+    }
+}
+
+class Moneda {
+    constructor(x, y) {
+        this.x = x; this.y = y; this.ancho = 40; this.alto = 40;
+    }
+    draw(camaraX) {
+        if (imgs.moneda.complete && imgs.moneda.naturalWidth !== 0) {
+            ctx.drawImage(imgs.moneda, this.x - camaraX, this.y, this.ancho, this.alto);
+        } else {
+            ctx.fillStyle = '#FFD700';
+            ctx.fillRect(this.x - camaraX, this.y, this.ancho, this.alto);
+        }
+    }
+}
+
+// Variables de estado del juego
+let estado = "MENU_INICIAL";
+let jugador = null;
+let plataformas = [];
+let monedas = [];
+let camaraX = 0;
+let ultimaPlataformaX = 1000;
+let contadorPlataformas = 0;
+let score = 0;
+let vidas = 3;
+let indiceQuiz = 0;
+let esCampeon = false;
+let pausado = false;
+let estadoQuiz = false;
+let estadoExplicacion = false;
+let listaQuiz = [];
+let filtroKasus = "ALL";
+let imgJugadorActual = null;
+let errorCamara = false;
+let capturandoFoto = false;
+let tecladoBuffer = "";
+let ultimoError = null;
+let sonidoGoDisparado = false;
+let sonidoWinDisparado = false;
+
+const teclas = {};
+
+window.addEventListener('keydown', (e) => {
+    // Evita que flechas y espacio desplacen la página
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
+    teclas[e.code] = true;
+    if (e.repeat) return; // ignora teclas mantenidas
+    if (e.key.length === 1) tecladoBuffer = (tecladoBuffer + e.key).slice(-30);
+    // Modo profesor (código secreto para pruebas): gana la partida al instante
+    if (tecladoBuffer.toLowerCase().includes("merequetengue")) {
+        esCampeon = true;
+    }
+    manejadorTeclas(e.key, e.code);
+});
+
+window.addEventListener('keyup', (e) => {
+    teclas[e.code] = false;
+});
+
+function reiniciarJuego(imgData, filtro) {
+    plataformas = [new Plataforma(0, 500, 1000, 50, imgs.piso)];
+    monedas = [];
+    ultimaPlataformaX = 1000;
+    contadorPlataformas = 0;
+    score = 0;
+    vidas = 3;
+    indiceQuiz = 0;
+    esCampeon = false;
+    pausado = false;
+    estadoQuiz = false;
+    estadoExplicacion = false;
+    sonidoGoDisparado = false;
+    sonidoWinDisparado = false;
+    tecladoBuffer = "";
+    ultimoError = null;
+
+    detenerMusica();
+
+    let subbanco = filtro === "ALL" ? bancoPreguntas : bancoPreguntas.filter(q => q.k === filtro);
+    if (subbanco.length === 0) subbanco = bancoPreguntas;
+    listaQuiz = barajar(subbanco).slice(0, 10).map(prepararPregunta);
+
+    jugador = new Jugador(100, 100, imgData);
+    camaraX = 0;
+}
+
+async function activarCamara() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        capturandoFoto = true;
+        errorCamara = false;
+    } catch (err) {
+        errorCamara = true;
+        capturandoFoto = false;
+    }
+}
+
+function detenerCamara() {
+    if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+    }
+    capturandoFoto = false;
+}
+
+function capturarFrame() {
+    const vw = video.videoWidth, vh = video.videoHeight;
+    if (!vw || !vh) { detenerCamara(); return null; }
+    // Recorte vertical centrado (proporción 2:3) para no deformar la cara
+    const sh = vh;
+    const sw = vh * 2 / 3;
+    const sx = (vw - sw) / 2;
+    const canvasTemp = document.createElement('canvas');
+    canvasTemp.width = 80;
+    canvasTemp.height = 120;
+    const ctxTemp = canvasTemp.getContext('2d');
+    ctxTemp.drawImage(video, sx, 0, sw, sh, 0, 0, 80, 120);
+    const imgSnap = new Image();
+    imgSnap.src = canvasTemp.toDataURL();
+    detenerCamara();
+    return imgSnap;
+}
+
+function manejadorTeclas(key, code) {
+    if (estado === "MENU_INICIAL") {
+        if (key.toLowerCase() === 'k') {
+            if (!capturandoFoto) activarCamara();
+        } else if (key.toLowerCase() === 's') {
+            detenerCamara();
+            imgJugadorActual = imgs.jugadorStd;
+            estado = "SELECCION_NIVEL";
+        } else if (code === 'Space' && capturandoFoto) {
+            imgJugadorActual = capturarFrame() || imgs.jugadorStd;
+            estado = "SELECCION_NIVEL";
+        }
+    } else if (estado === "SELECCION_NIVEL") {
+        if (key === '1') { filtroKasus = "Nom"; estado = "HISTORIA"; }
+        if (key === '2') { filtroKasus = "Akk"; estado = "HISTORIA"; }
+        if (key === '3') { filtroKasus = "Dat"; estado = "HISTORIA"; }
+        if (key === '4') { filtroKasus = "ALL"; estado = "HISTORIA"; }
+    } else if (estado === "HISTORIA") {
+        if (code === 'Space') {
+            reiniciarJuego(imgJugadorActual, filtroKasus);
+            estado = "JUGANDO";
+            iniciarMusica();
+        }
+    } else if (estado === "JUGANDO") {
+        if (estadoExplicacion) {
+            if (code === 'Enter' || code === 'Space') {
+                estadoExplicacion = false;
+                indiceQuiz++;
+                if (vidas <= 0) {
+                    jugador.gameOver = true;
+                    detenerMusica();
+                } else if (indiceQuiz >= listaQuiz.length) {
+                    esCampeon = true;
+                    detenerMusica();
+                } else {
+                    musicaFondo.play().catch(() => {});
+                }
+            }
+        } else if (estadoQuiz) {
+            let sel = null;
+            if (key.toLowerCase() === 'a') sel = "a";
+            if (key.toLowerCase() === 'b') sel = "b";
+            if (key.toLowerCase() === 'c') sel = "c";
+
+            if (sel) {
+                let qActual = listaQuiz[indiceQuiz];
+                if (sel === qActual.a) {
+                    score++;
+                    indiceQuiz++;
+                    if (indiceQuiz >= listaQuiz.length) {
+                        esCampeon = true;
+                        detenerMusica();
+                    } else {
+                        musicaFondo.play().catch(() => {});
+                    }
+                } else {
+                    vidas--;
+                    let idxSel = sel === "a" ? 0 : (sel === "b" ? 1 : 2);
+                    let idxCorr = qActual.a === "a" ? 0 : (qActual.a === "b" ? 1 : 2);
+                    ultimoError = {
+                        q: qActual.q,
+                        tuAns: qActual.o[idxSel],
+                        corrAns: qActual.o[idxCorr],
+                        regla: qActual.r
+                    };
+                    estadoExplicacion = true;
+                }
+                estadoQuiz = false;
+            }
+        } else if (jugador.gameOver || esCampeon) {
+            if (key.toLowerCase() === 'r') {
+                detenerMusica();
+                estado = "MENU_INICIAL";
+            }
+        } else {
+            if (code === 'Enter') {
+                pausado = !pausado;
+                if (pausado) pausarMusica();
+                else musicaFondo.play().catch(() => {});
+            } else if (pausado) {
+                if (key.toLowerCase() === 'w') {
+                    pausado = false;
+                    musicaFondo.play().catch(() => {});
+                }
+                if (key.toLowerCase() === 'r') {
+                    detenerMusica();
+                    estado = "MENU_INICIAL";
+                }
+            }
+        }
+    }
+}
+
+// Lógica del juego (se ejecuta a 60 pasos por segundo, sin importar la pantalla)
+function actualizarJuego() {
+        if (!pausado && !jugador.gameOver && !estadoQuiz && !estadoExplicacion && !esCampeon) {
+            jugador.update(plataformas, teclas);
+
+            if (jugador.gameOver) {
+                detenerMusica();
+                if (!sonidoGoDisparado) {
+                    sonidos.gameover.play().catch(() => {});
+                    sonidoGoDisparado = true;
+                }
+            }
+
+            if (ultimaPlataformaX < jugador.x + 1000) {
+                let pAncho = Math.floor(Math.random() * 100) + 80;
+                let pX = ultimaPlataformaX + Math.floor(Math.random() * 120) + 80;
+                let pY = Math.floor(Math.random() * 150) + 300;
+                plataformas.push(new Plataforma(pX, pY, pAncho, 20, imgs.bloque));
+                contadorPlataformas++;
+                if (contadorPlataformas % 5 === 0 && indiceQuiz < listaQuiz.length) {
+                    monedas.push(new Moneda(pX + pAncho / 2 - 20, 300));
+                }
+                ultimaPlataformaX = pX + pAncho;
+            }
+
+            for (let i = monedas.length - 1; i >= 0; i--) {
+                let m = monedas[i];
+                if (jugador.x < m.x + m.ancho && jugador.x + jugador.ancho > m.x &&
+                    jugador.y < m.y + m.alto && jugador.y + jugador.alto > m.y) {
+                    monedas.splice(i, 1);
+                    estadoQuiz = true;
+                    pausarMusica();
+                }
+            }
+
+            if (jugador.x > ANCHO / 2) {
+                camaraX = jugador.x - ANCHO / 2;
+            }
+        }
+}
+
+// Loop Principal
+const PASO = 1000 / 60;
+let ultimoTiempo = performance.now();
+let acumulador = 0;
+
+function gameLoop(ahora) {
+    acumulador += Math.min(ahora - ultimoTiempo, 250);
+    ultimoTiempo = ahora;
+    while (acumulador >= PASO) {
+        if (estado === "JUGANDO") actualizarJuego();
+        acumulador -= PASO;
+    }
+
+    ctx.clearRect(0, 0, ANCHO, ALTO);
+
+    if (estado === "MENU_INICIAL") {
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, ANCHO, ALTO);
+
+        if (capturandoFoto) {
+            ctx.drawImage(video, 280, 50, 400, 400);
+            ctx.fillStyle = "white";
+            ctx.font = "24px Arial";
+            ctx.fillText("[LEERTASTE] zum Foto!", 360, 480);
+        } else {
+            ctx.fillStyle = "white";
+            ctx.font = "bold 50px Arial";
+            ctx.fillText("DEKLINATIONSSPIEL", 200, 100);
+            ctx.font = "22px Arial";
+            ctx.fillText("Drücke [K] für Kamera-Foto oder [S] für Standard-Sprite", 200, 220);
+            ctx.fillText("Steuerung: Pfeiltasten (← → bewegen, ↑ springen)", 200, 280);
+            ctx.fillText("Antworten im Quiz: Tasten [A], [B] oder [C]", 200, 340);
+            if (errorCamara) {
+                ctx.fillStyle = "red";
+                ctx.fillText("Kamera nicht gefunden! Bitte [S] drücken.", 250, 420);
+            }
+        }
+    } 
+    else if (estado === "SELECCION_NIVEL") {
+        ctx.fillStyle = "#141E32";
+        ctx.fillRect(0, 0, ANCHO, ALTO);
+        ctx.fillStyle = "#FFD700";
+        ctx.font = "bold 50px Arial";
+        ctx.fillText("WÄHLE DAS LEVEL", 240, 100);
+        ctx.fillStyle = "white";
+        ctx.font = "24px Arial";
+        ctx.fillText("[1] Welt 1: Nominativ", 320, 220);
+        ctx.fillText("[2] Welt 2: Akkusativ", 320, 280);
+        ctx.fillText("[3] Welt 3: Dativ", 320, 340);
+        ctx.fillText("[4] Welt 4: Alle Fälle (Meister)", 320, 400);
+    } 
+    else if (estado === "HISTORIA") {
+        ctx.fillStyle = "#0A0A1E";
+        ctx.fillRect(0, 0, ANCHO, ALTO);
+        ctx.fillStyle = "#FFD700";
+        ctx.font = "bold 32px Arial";
+        ctx.fillText("¡DER ENDUNGS-DIEB HAT ZUGESCHLAGEN!", 150, 100);
+        ctx.fillStyle = "white";
+        ctx.font = "20px Arial";
+        ctx.fillText("Der fiese Endungs-Dieb hat alle Adjektivendungen gestohlen.", 200, 180);
+        ctx.fillText("Ohne sie versinkt die deutsche Sprache im Chaos!", 220, 220);
+        ctx.fillText("Deine Mission: Laufe durch die Welten, sammle die Fragen", 200, 300);
+        ctx.fillText("und erobere die richtigen Endungen zurück.", 260, 340);
+        ctx.fillStyle = "#FFD700";
+        ctx.fillText("Drücke [LEERTASTE], um das Abenteuer zu starten!", 220, 440);
+    } 
+    else if (estado === "JUGANDO") {
+        // Renderizado
+        if (imgs.fondo.complete && imgs.fondo.naturalWidth !== 0) {
+            ctx.drawImage(imgs.fondo, 0, 0, ANCHO, ALTO);
+        } else {
+            ctx.fillStyle = "#87CEEB";
+            ctx.fillRect(0, 0, ANCHO, ALTO);
+        }
+
+        plataformas.forEach(p => p.draw(camaraX));
+        monedas.forEach(m => m.draw(camaraX));
+        jugador.draw(camaraX);
+
+        ctx.fillStyle = "white";
+        ctx.font = "24px Arial";
+        ctx.fillText(`Punkte: ${score}/${listaQuiz.length}`, 780, 40);
+        ctx.fillStyle = "#FF6B6B";
+        ctx.fillText(`Leben: ${vidas > 0 ? "❤️ ".repeat(vidas) : "❌"}`, 40, 40);
+
+        if (esCampeon) {
+            detenerMusica();
+            if (!sonidoWinDisparado) {
+                sonidos.win.play().catch(() => {});
+                sonidoWinDisparado = true;
+            }
+            ctx.fillStyle = "rgba(255, 215, 0, 0.8)";
+            ctx.fillRect(0, 0, ANCHO, ALTO);
+            ctx.fillStyle = "white";
+            ctx.font = "bold 60px Arial";
+            ctx.fillText("CHAMPION!", 300, 200);
+            ctx.font = "24px Arial";
+            ctx.fillText("[R]estart", 420, 380);
+        } 
+        else if (jugador.gameOver) {
+            detenerMusica();
+            if (!sonidoGoDisparado) {
+                sonidos.gameover.play().catch(() => {});
+                sonidoGoDisparado = true;
+            }
+            ctx.fillStyle = "rgba(150, 0, 0, 0.8)";
+            ctx.fillRect(0, 0, ANCHO, ALTO);
+            ctx.fillStyle = "white";
+            ctx.font = "bold 60px Arial";
+            ctx.fillText("GAME OVER", 280, 200);
+            ctx.font = "24px Arial";
+            ctx.fillText(`Punkte: ${score}/${listaQuiz.length}`, 410, 280);
+            ctx.fillText("[R]estart", 420, 380);
+        } 
+        else if (estadoExplicacion && ultimoError) {
+            ctx.fillStyle = "rgba(40, 0, 0, 0.9)";
+            ctx.fillRect(0, 0, ANCHO, ALTO);
+            ctx.fillStyle = "#FF5050";
+            ctx.font = "bold 50px Arial";
+            ctx.fillText("FALSCH!", 380, 80);
+            ctx.fillStyle = "white";
+            ctx.font = "22px Arial";
+            ctx.fillText(`Frage: ${ultimoError.q}`, 100, 160);
+            ctx.fillStyle = "#FF8080";
+            ctx.fillText(`Deine Antwort: ${ultimoError.tuAns}`, 100, 210);
+            ctx.fillStyle = "#80FF80";
+            ctx.fillText(`Richtig war: ${ultimoError.corrAns}`, 100, 250);
+
+            ctx.fillStyle = "rgba(20, 60, 20, 0.9)";
+            ctx.fillRect(80, 300, 800, 100);
+            ctx.strokeStyle = "#00FF00";
+            ctx.strokeRect(80, 300, 800, 100);
+            ctx.fillStyle = "#FFD700";
+            ctx.fillText("GRAMMATIK-REGEL:", 100, 335);
+            ctx.fillStyle = "white";
+            ctx.fillText(ultimoError.regla, 100, 370);
+
+            ctx.fillStyle = "#CCCCCC";
+            ctx.font = "18px Arial";
+            ctx.fillText("Drücke [ENTER] oder [LEERTASTE], um fortzufahren...", 260, 460);
+        } 
+        else if (estadoQuiz) {
+            ctx.fillStyle = "rgba(0, 50, 80, 0.9)";
+            ctx.fillRect(0, 0, ANCHO, ALTO);
+            let q = listaQuiz[indiceQuiz];
+            ctx.fillStyle = "white";
+            ctx.font = "24px Arial";
+            ctx.fillText(q.q, 100, 160);
+            ctx.fillText(`a) ${q.o[0]}`, 100, 230);
+            ctx.fillText(`b) ${q.o[1]}`, 100, 280);
+            ctx.fillText(`c) ${q.o[2]}`, 100, 330);
+        } 
+        else if (pausado) {
+            ctx.fillStyle = "white";
+            ctx.font = "28px Arial";
+            ctx.fillText("PAUSE - [W]eiter, [R]estart", 300, 270);
+        }
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
